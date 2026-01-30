@@ -1,3 +1,17 @@
+<video id="jodieVideo" width="100%" style="max-width:720px; border-radius:16px;"
+  controls autoplay loop muted playsinline>
+  <source src="jodie.mp4" type="video/mp4">
+  Tvůj prohlížeč neumí přehrát video.
+</video>
+
+<p style="margin-top:12px; opacity:0.9;">Jodie:</p>
+<div id="jodieText" style="min-height:48px; padding:12px; border:1px solid rgba(255,255,255,0.2); border-radius:12px; max-width:720px;">
+  Ahoj, Dani… jsem tady.
+</div>
+
+
+
+
 <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
   <button id="talkBtn">🎤 Mluvit</button>
   <button id="stopBtn" disabled>⏹ Stop</button>
@@ -23,6 +37,7 @@
     rec.lang = "cs-CZ";
     rec.interimResults = true;
     rec.continuous = true;
+    const jodieText = document.getElementById("jodieText");
 
     let finalText = "";
 
@@ -46,6 +61,9 @@
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) finalText += transcript + " ";
         else interim += transcript;
+        jodieText.textContent = "Slyším tě, Dani. Řekni mi… co teď potřebuješ?";
+
+      
       }
       userText.textContent = (finalText + interim).trim() || "…";
     };
