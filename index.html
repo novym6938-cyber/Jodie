@@ -1,28 +1,212 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Jodie</title>
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    :root { color-scheme: dark; }
+    body{
+      margin:0;
+      background:#000;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:#fff;
     }
-    video {
-      width: 100%;
-      max-width: 720px;
-      border-radius: 16px;
+    .wrap{
+      width:min(900px, 96vw);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:14px;
+    }
+    .card{
+      position:relative;
+      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    video{
+      width:100%;
+      display:block;
+      background:#000;
+    }
+    .bar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      border-top:1px solid rgba(255,255,255,0.10);
+    }
+    .left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:14px;
+      font-weight:600;
+      cursor:pointer;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+    }
+    button:active{ transform: scale(0.98); }
+    button:hover{ background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.26); }
+    button.primary{
+      background: rgba(0,150,255,0.25);
+      border-color: rgba(0,150,255,0.40);
+    }
+    button.primary:hover{ background: rgba(0,150,255,0.32); }
+    button.danger{
+      background: rgba(255,60,60,0.25);
+      border-color: rgba(255,60,60,0.40);
+    }
+    .status{
+      opacity:.9;
+      font-size:14px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      white-space:nowrap;
+    }
+    .log{
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius:14px;
+      padding:12px;
+      min-height:52px;
+      line-height:1.35;
+      font-size:15px;
+    }
+    .hint{
+      opacity:.7;
+      font-size:12px;
+      margin-top:2px;
+    }
+    .row{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
   </style>
 </head>
 <body>
-  <video controls autoplay>
-    <source src="jodie.mp4" type="video/mp4">
-    Tvůj prohlížeč nepodporuje video.
-  </video>
+  <div class="wrap">
+    <div class="card">
+      <video id="vid" controls autoplay playsinline>
+        <source src="jodie.mp4" type="video/mp4" />
+        Tvůj prohlížeč nepodporuje video.
+      </video>
+
+      <div class="bar">
+        <div class="left">
+          <button id="talkBtn" class="primary">🎙️ Mluvit</button>
+          <button id="stopBtn" class="danger" disabled>⏹️ Stop</button>
+          <span id="status" class="status">Připraveno</span>
+        </div>
+        <div class="status" id="lang">CZ</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="log" id="transcript"><span style="opacity:.7">Tady se objeví, co řekneš…</span></div>
+      <div class="hint">Tip: Na mobilu povol mikrofon. Když to nepůjde, otevři stránku v Chrome a zkontroluj oprávnění mikrofonu.</div>
+    </div>
+  </div>
+
+  <script>
+    // Web Speech API (SpeechRecognition) – funguje nejlépe v Chrome (Android/PC)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const talkBtn = document.getElementById("talkBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const statusEl = document.getElementById("status");
+    const transcriptEl = document.getElementById("transcript");
+
+    let rec = null;
+    let listening = false;
+
+    function setStatus(text) { statusEl.textContent = text; }
+
+    function showText(text) {
+      transcriptEl.textContent = text && text.trim().length ? text : "…";
+    }
+
+    if (!SpeechRecognition) {
+      setStatus("Mikrofon: nepodporováno v tomto prohlížeči");
+      talkBtn.disabled = true;
+      stopBtn.disabled = true;
+    } else {
+      rec = new SpeechRecognition();
+      rec.lang = "cs-CZ";
+      rec.interimResults = true;   // průběžný text
+      rec.continuous = true;       // drží poslech, dokud nedáš Stop
+
+      rec.onstart = () => {
+        listening = true;
+        setStatus("Poslouchám…");
+        talkBtn.disabled = true;
+        stopBtn.disabled = false;
+      };
+
+      rec.onend = () => {
+        listening = false;
+        setStatus("Zastaveno");
+        talkBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+
+      rec.onerror = (e) => {
+        setStatus("Chyba mikrofonu: " + e.error);
+        // ukončit, aby se UI srovnalo
+        try { rec.stop(); } catch {}
+      };
+
+      rec.onresult = (event) => {
+        let finalText = "";
+        let interimText = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const txt = event.results[i][0].transcript;
+          if (event.results[i].isFinal) finalText += txt + " ";
+          else interimText += txt;
+        }
+
+        // Zobrazuj průběžně, ať to působí „živě“
+        showText((finalText + interimText).trim());
+      };
+
+      talkBtn.addEventListener("click", async () => {
+        // Některé mobily chtějí „user gesture“ + povolení mic
+        try {
+          setStatus("Žádám o mikrofon…");
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+          rec.start();
+        } catch (err) {
+          setStatus("Mikrofon nepovolen / nejde spustit");
+          console.error(err);
+        }
+      });
+
+      stopBtn.addEventListener("click", () => {
+        if (!listening) return;
+        try { rec.stop(); } catch {}
+      });
+    }
+  </script>
 </body>
 </html>
