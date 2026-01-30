@@ -1,40 +1,64 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-  <meta charset="UTF-8">
-  <title>Jodie</title>
-  <style>
-    body {
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    button {
-      font-size: 20px;
-      padding: 15px 30px;
-      border-radius: 10px;
-      border: none;
-      background: #e53935;
-      color: white;
-    }
-  </style>
-</head>
-<body>
+<div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+  <button id="talkBtn">🎤 Mluvit</button>
+  <button id="stopBtn" disabled>⏹ Stop</button>
+</div>
 
-  <h1>Jodie</h1>
+<p style="margin-top:12px; opacity:0.9;">Co jsi řekl:</p>
+<div id="userText" style="min-height:48px; padding:12px; border:1px solid rgba(255,255,255,0.2); border-radius:12px; max-width:720px;">
+  …
+</div>
 
-  <button onclick="startTalk()">🎤 Mluvit</button>
+<script>
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  <script>
-    function startTalk() {
-      alert("Tady bude mluvení s Jodie 🙂");
-    }
-  </script>
+  const talkBtn = document.getElementById("talkBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const userText = document.getElementById("userText");
 
-</body>
-</html>
+  if (!SpeechRecognition) {
+    userText.textContent = "Tvůj prohlížeč nepodporuje rozpoznávání řeči. Zkus Chrome.";
+    talkBtn.disabled = true;
+  } else {
+    const rec = new SpeechRecognition();
+    rec.lang = "cs-CZ";
+    rec.interimResults = true;
+    rec.continuous = true;
+
+    let finalText = "";
+
+    talkBtn.addEventListener("click", () => {
+      finalText = "";
+      userText.textContent = "Poslouchám…";
+      rec.start();
+      talkBtn.disabled = true;
+      stopBtn.disabled = false;
+    });
+
+    stopBtn.addEventListener("click", () => {
+      rec.stop();
+      talkBtn.disabled = false;
+      stopBtn.disabled = true;
+    });
+
+    rec.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += transcript + " ";
+        else interim += transcript;
+      }
+      userText.textContent = (finalText + interim).trim() || "…";
+    };
+
+    rec.onerror = (e) => {
+      userText.textContent = "Chyba mikrofonu/rozpoznání: " + e.error;
+      talkBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+
+    rec.onend = () => {
+      talkBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+  }
+</script>
