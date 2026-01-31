@@ -9,9 +9,44 @@
   Ahoj, Dani… jsem tady.
 </div>
 <div id="jodieStatus" style="margin-top:8px; opacity:0.7; max-width:720px;">
-</div>
+.frame {
+  position: relative;
+  display: inline-block;
+  border-radius: 18px;
+  overflow: hidden;
+}
 
-<button id="repeatBtn" style="margin-top:10px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.25); color:white;">
+/* „probuzení“ – jemný glow + drobný nádech pohybu */
+.frame.wake {
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.25), 0 0 24px rgba(255, 210, 160, 0.35);
+  transform: translateZ(0);
+  animation: wakePulse 1.2s ease-in-out;
+}
+
+@keyframes wakePulse {
+  0%   { transform: scale(1.00); filter: brightness(1.00); }
+  35%  { transform: scale(1.015); filter: brightness(1.06); }
+  100% { transform: scale(1.00); filter: brightness(1.00); }
+}
+
+/* Drobné „souhlasné“ hnutí (jako kývnutí) */
+video.nod {
+  animation: nod 0.55s ease-in-out;
+}
+@keyframes nod {
+  0%   { transform: translateY(0px); }
+  35%  { transform: translateY(2px); }
+  70%  { transform: translateY(-1px); }
+  100% { transform: translateY(0px); }
+}
+
+</div>
+  
+
+<button id="repeatBtn" style="margin-top:10px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.25); <div id="jodieFrame" class="frame">
+  <video id="jodieVideo" src="jodie.mp4" autoplay muted loop playsinline></video>
+</div>
+color:white;">
   Zopakovat odpověď
 </button>
 
@@ -179,6 +214,25 @@ setTimeout(() => {
   }
 </script>
 <script>
+ function jodieWake() {
+  const frame = document.getElementById("jodieFrame");
+  const video = document.getElementById("jodieVideo");
+
+  // glow/pulse na rámu
+  frame.classList.remove("wake");
+  void frame.offsetWidth; // restart animace
+  frame.classList.add("wake");
+
+  // jemné „kývnutí“ videa
+  video.classList.remove("nod");
+  void video.offsetWidth;
+  video.classList.add("nod");
+
+  // po chvíli uklidit třídy (ať jde spustit znovu)
+  setTimeout(() => frame.classList.remove("wake"), 1300);
+  setTimeout(() => video.classList.remove("nod"), 600);
+}
+ 
   const input = document.getElementById("textInput");
   const sendBtn = document.getElementById("sendText");
 
@@ -187,7 +241,8 @@ setTimeout(() => {
     if (!text) return;
 
     // zatím jen simulace reakce Jodie
-    console.log("Uživatel napsal:", text);
+    console.log("Uživatel napsal:", text);jodieWake();
+
 
     // tady později napojíš AI odpověď / hlas
     // např. changeJodieState("listening");
