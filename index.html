@@ -214,7 +214,52 @@ setTimeout(() => {
   }
 </script>
 <script>
- function jodieWake() {
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const sendBtn = document.getElementById("sendBtn");
+  const input = document.getElementById("userInput");
+
+  console.log("✅ Script loaded", { sendBtn, input });
+
+  function jodieWake() {
+    const frame = document.getElementById("jodieFrame");
+    const video = document.getElementById("jodieVideo");
+    if (!frame || !video) {
+      console.warn("⚠️ Chybí jodieFrame nebo jodieVideo", { frame, video });
+      return;
+    }
+
+    frame.classList.remove("wake");
+    void frame.offsetWidth;
+    frame.classList.add("wake");
+
+    video.classList.remove("nod");
+    void video.offsetWidth;
+    video.classList.add("nod");
+
+    setTimeout(() => frame.classList.remove("wake"), 1300);
+    setTimeout(() => video.classList.remove("nod"), 600);
+  }
+
+  if (!sendBtn || !input) {
+    console.error("❌ Nenašel jsem sendBtn nebo userInput. Zkontroluj ID v HTML.");
+    return;
+  }
+
+  sendBtn.addEventListener("click", (e) => {
+    e.preventDefault(); // kdyby to bylo ve formuláři
+    const text = input.value.trim();
+    console.log("🟦 Klik na Odeslat. Text:", text);
+    if (!text) return;
+
+    jodieWake();
+    input.value = "";
+    input.focus();
+  });
+});
+</script>
+
+  function jodieWake() {
   const frame = document.getElementById("jodieFrame");
   const video = document.getElementById("jodieVideo");
 
