@@ -178,3 +178,46 @@ setTimeout(() => {
     };
   }
 </script>
+<script>
+  const input = document.getElementById("textInput");
+  const sendBtn = document.getElementById("sendText");
+
+  sendBtn.addEventListener("click", () => {
+    const text = input.value.trim();
+    if (!text) return;
+
+    // zatím jen simulace reakce Jodie
+    console.log("Uživatel napsal:", text);
+
+    // tady později napojíš AI odpověď / hlas
+    // např. changeJodieState("listening");
+
+    input.value = "";
+  });
+</script>
+<div id="controls" style="margin-top: 16px; text-align: center;">
+  <input
+    id="textInput"
+    type="text"
+    placeholder="Napiš Jodie zprávu…"
+    style="
+      width: 70%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    "
+  />
+  <button
+    id="sendText"
+    style="
+      padding: 10px 16px;
+      font-size: 16px;
+      margin-left: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    "
+  >
+    Odeslat
+  </button>
+</div>
