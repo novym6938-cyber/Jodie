@@ -140,14 +140,54 @@
       }
 
       // ====== Psaní ======
-      function sendTyped() {
-        const text = (userInput.value || "").trim();
-        if (!text) return;
-        userText.textContent = text;
-        userInput.value = "";
-        jodieText.textContent = "…";
-        status.textContent = "Jodie reaguje pohybem.";
-        const jodieAudio = document.getElementById("jodieAudio");
+     async function sendTyped() {
+  try {
+    const text = (userInput.value || "").trim();
+    if (!text) return;
+
+    userText.textContent = text;
+    userInput.value = "";
+    jodieText.textContent = "…";
+    status.textContent = "Jodie přemýšlí…";
+    jodieWake();
+
+    // KONTROLA Worker URL
+    if (!WORKER_TALK_URL || WORKER_TALK_URL.includes("TVUJ-WORKER")) {
+      status.textContent = "Chybí Worker URL (WORKER_TALK_URL).";
+      jodieText.textContent = "Nejsem připojená na server.";
+      return;
+    }
+
+    const res = await fetch(WORKER_TALK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      status.textContent = "Server chyba: " + (data.error || res.status);
+      jodieText.textContent = "Něco se pokazilo na serveru.";
+      return;
+    }
+
+    jodieText.textContent = data.jodieText || "…";
+    status.textContent = "";
+
+    if (data.audioMp3Base64) {
+      jodieAudio.src = "data:audio/mp3;base64," + data.audioMp3Base64;
+      await jodieAudio.play();
+    } else {
+      status.textContent = "Nepřišel zvuk (audioMp3Base64).";
+    }
+
+  } catch (err) {
+    status.textContent = "Chyba: " + err.message;
+    jodieText.textContent = "Spadlo to v prohlížeči.";
+  }
+}
+
 
 // sem vložíš URL Workeru (doplníme jakmile mi ho pošleš)
 const WORKER_TALK_URL = "https://jodie.novym6938.workers.dev//talk";
