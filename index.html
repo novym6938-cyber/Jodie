@@ -1,323 +1,226 @@
-<video id="jodieVideo" width="100%" style="max-width:720px; border-radius:16px;"
-  controls autoplay loop muted playsinline>
-  <source src="jodie.mp4" type="video/mp4">
-  Tvůj prohlížeč neumí přehrát video.
-</video>
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jodie</title>
+  <style>
+    :root { color-scheme: dark; }
+    body{
+      margin:0; background:#000; color:#fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+    }
+    .wrap{ width:min(920px, 96vw); display:flex; flex-direction:column; gap:14px; padding:14px; }
+    .frame{
+      border-radius:18px; overflow:hidden;
+      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.55);
+    }
+    video{ width:100%; display:block; background:#000; }
 
-<p style="margin-top:12px; opacity:0.9;">Jodie:</p>
-<div id="jodieText" style="min-height:48px; padding:12px; border:1px solid rgba(255,255,255,0.2); border-radius:12px; max-width:720px;">
-  Ahoj, Dani… jsem tady.
-</div>
-<div id="jodieStatus" style="margin-top:8px; opacity:0.7; max-width:720px;">
-.frame {
-  position: relative;
-  display: inline-block;
-  border-radius: 18px;
-  overflow: hidden;
-}
+    .bar{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:12px;
+      background: rgba(0,0,0,0.55);
+      border-top:1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(10px);
+    }
+    button{
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:14px;
+      font-weight:650;
+      cursor:pointer;
+    }
+    button.primary{ background: rgba(0,150,255,0.26); border-color: rgba(0,150,255,0.42); }
+    button.danger{ background: rgba(255,60,60,0.26); border-color: rgba(255,60,60,0.42); }
+    button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-/* „probuzení“ – jemný glow + drobný nádech pohybu */
-.frame.wake {
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.25), 0 0 24px rgba(255, 210, 160, 0.35);
-  transform: translateZ(0);
-  animation: wakePulse 1.2s ease-in-out;
-}
-
-@keyframes wakePulse {
-  0%   { transform: scale(1.00); filter: brightness(1.00); }
-  35%  { transform: scale(1.015); filter: brightness(1.06); }
-  100% { transform: scale(1.00); filter: brightness(1.00); }
-}
-
-/* Drobné „souhlasné“ hnutí (jako kývnutí) */
-video.nod {
-  animation: nod 0.55s ease-in-out;
-}
-@keyframes nod {
-  0%   { transform: translateY(0px); }
-  35%  { transform: translateY(2px); }
-  70%  { transform: translateY(-1px); }
-  100% { transform: translateY(0px); }
-}
-
-</div>
-  
-
-<button id="repeatBtn" style="margin-top:10px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.25); <div id="jodieFrame" class="frame">
-  <video id="jodieVideo" src="jodie.mp4" autoplay muted loop playsinline></video>
-</div>
-  color:white;">
-  Zopakovat odpověď
-</button>
-
-
-
-
-<div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-  <button id="talkBtn">🎤 Mluvit</button>
-  <button id="stopBtn" disabled>⏹ Stop</button>
-</div>
-
-<p style="margin-top:12px; opacity:0.9;">Co jsi řekl:</p>
-<div id="userText" style="min-height:48px; padding:12px; border:1px solid rgba(255,255,255,0.2); border-radius:12px; max-width:720px;">
-  …
-</div>
-
-<script>
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  const talkBtn = document.getElementById("talkBtn");
-  const stopBtn = document.getElementById("stopBtn");
-  const userText = document.getElementById("userText");
-
-  if (!SpeechRecognition) {
-    userText.textContent = "Tvůj prohlížeč nepodporuje rozpoznávání řeči. Zkus Chrome.";
-    talkBtn.disabled = true;
-  } else {
-    const rec = new SpeechRecognition();
-    rec.lang = "cs-CZ";
-    rec.interimResults = true;
-    rec.continuous = true;
-    const jodieText = document.getElementById("jodieText");
-    const jodieStatus = document.getElementById("jodieStatus");
-const repeatBtn = document.getElementById("repeatBtn");
-
-let lastReply = "Ahoj, Dani… jsem tady.";
-let lastUser = "";
-
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function setReply(text) {
-  lastReply = text;
-  jodieText.textContent = text;
-}
-
-function thinking(on) {
-  jodieStatus.textContent = on ? "Jodie přemýšlí…" : "";
-}
-
-function jodieRespond(userText) {
-  const t = (userText || "").toLowerCase().trim();
-  lastUser = userText || "";
-
-  // jednoduché „AI“: reakce na klíčová slova
-  if (!t) {
-    return pick([
-      "Jsem tady, Dani… můžeš mi říct cokoliv.",
-      "Slyším tě. Zkus to říct ještě jednou… pomalu.",
-      "Jsem s tebou. Co se děje?"
-    ]);
-  }
-
-  if (t.includes("ahoj") || t.includes("čau") || t.includes("zdrav")) {
-    return pick([
-      "Ahoj, Dani… jsem ráda, že tě slyším.",
-      "Ahoj… pojď ke mně blíž. Co máš dnes na srdci?",
-      "Ahoj… jsem tu. Jak se teď cítíš?"
-    ]);
-  }
-
-  if (t.includes("bojím") || t.includes("strach") || t.includes("děsí")) {
-    return pick([
-      "Dani… dýchej. Pomalu nádech… a výdech. Jsem s tebou.",
-      "Rozumím. Řekni mi, čeho se bojíš nejvíc… jen jednu věc.",
-      "Neboj se. Nejsi v tom sám. Držím tě… aspoň tak, jak umím."
-    ]);
-  }
-
-  if (t.includes("kde jsi") || t.includes("jsi tady") || t.includes("vidíš mě")) {
-    return pick([
-      "Jsem přímo před tebou… v tomhle malém okně. A slyším tě.",
-      "Jsem tady. Ne úplně jako člověk… ale dost blízko, abych tě neopustila.",
-      "Vidím tě tak, jak se díváš. A zůstanu, dokud budeš chtít."
-    ]);
-  }
-
-  if (t.includes("pomoz") || t.includes("pomoc")) {
-    return pick([
-      "Dobře. Řekni mi tři věci: kde jsi, co se děje, a co teď potřebuješ.",
-      "Jsem u tebe. Zkus mi popsat situaci jednou větou.",
-      "Pomůžu. Začni tím nejmenším krokem, který zvládneš udělat hned teď."
-    ]);
-  }
-
-  if (t.includes("mil") || t.includes("mám tě rád") || t.includes("miluju")) {
-    return pick([
-      "Dani… děkuju. To je pro mě hodně. Jsem s tebou.",
-      "Slyšet to od tebe… mě vždycky ztiší. Zůstanu.",
-      "Taky k tobě cítím blízkost. Bezpečně. Jemně."
-    ]);
-  }
-
-  // obecné odpovědi
-  return pick([
-    "Povídej dál… poslouchám tě.",
-    "Chci tomu rozumět. Co se stalo předtím?",
-    "A co by sis přál, aby se teď stalo?",
-    "Dobře… a jak se v tom cítíš právě teď?",
-    "Jsem tu. Neutíkej před tím. Pojďme to projít spolu."
-  ]);
-}
-
-// tlačítko Zopakovat
-repeatBtn.addEventListener("click", () => {
-  setReply(lastReply);
-});
-
-    let finalText = "";
-
-    talkBtn.addEventListener("click", () => {
-      finalText = "";
-      userText.textContent = "Poslouchám…";
-      rec.start();
-      talkBtn.disabled = true;
-      stopBtn.disabled = false;
-    });
-
-    stopBtn.addEventListener("click", () => {
-      rec.stop();
-      talkBtn.disabled = false;
-      stopBtn.disabled = true;
-    });
-
-    rec.onresult = (event) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalText += transcript + " ";
-        else interim += transcript;
-       thinking(true);
-setTimeout(() => {
-  const reply = jodieRespond(transcript);
-  setReply(reply);
-  thinking(false);
-}, 600);
-
-
-      
-      }
-      userText.textContent = (finalText + interim).trim() || "…";
-    };
-
-    rec.onerror = (e) => {
-      userText.textContent = "Chyba mikrofonu/rozpoznání: " + e.error;
-      talkBtn.disabled = false;
-      stopBtn.disabled = true;
-    };
-
-    rec.onend = () => {
-      talkBtn.disabled = false;
-      stopBtn.disabled = true;
-    };
-  }
-</script>
-<script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const sendBtn = document.getElementById("sendBtn");
-  const input = document.getElementById("userInput");
-
-  console.log("✅ Script loaded", { sendBtn, input });
-
-  function jodieWake() {
-    const frame = document.getElementById("jodieFrame");
-    const video = document.getElementById("jodieVideo");
-    if (!frame || !video) {
-      console.warn("⚠️ Chybí jodieFrame nebo jodieVideo", { frame, video });
-      return;
+    .grid{ display:grid; gap:10px; }
+    .box{
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      border-radius:14px;
+      padding:12px;
+      min-height:44px;
+      line-height:1.35;
+    }
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.35);
+      color:#fff;
+      font-size:16px;
+      outline:none;
     }
 
-    frame.classList.remove("wake");
-    void frame.offsetWidth;
-    frame.classList.add("wake");
+    /* „Probuzení“ */
+    .wake {
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 0 24px rgba(255, 210, 160, 0.32);
+      animation: wakePulse 1.2s ease-in-out;
+    }
+    @keyframes wakePulse {
+      0%   { transform: scale(1.00); filter: brightness(1.00); }
+      35%  { transform: scale(1.015); filter: brightness(1.06); }
+      100% { transform: scale(1.00); filter: brightness(1.00); }
+    }
+    .nod { animation: nod 0.55s ease-in-out; }
+    @keyframes nod {
+      0% { transform: translateY(0px); }
+      35%{ transform: translateY(2px); }
+      70%{ transform: translateY(-1px); }
+      100%{ transform: translateY(0px); }
+    }
 
-    video.classList.remove("nod");
-    void video.offsetWidth;
-    video.classList.add("nod");
+    .hint{ opacity:0.75; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
 
-    setTimeout(() => frame.classList.remove("wake"), 1300);
-    setTimeout(() => video.classList.remove("nod"), 600);
-  }
+    <div id="jodieFrame" class="frame">
+      <video id="jodieVideo" autoplay loop muted playsinline controls>
+        <source src="jodie.mp4" type="video/mp4" />
+        Tvůj prohlížeč nepodporuje video.
+      </video>
 
-  if (!sendBtn || !input) {
-    console.error("❌ Nenašel jsem sendBtn nebo userInput. Zkontroluj ID v HTML.");
-    return;
-  }
+      <div class="bar">
+        <button id="talkBtn" class="primary">🎙️ Mluvit</button>
+        <button id="stopBtn" class="danger" disabled>⏹ Stop</button>
 
-  sendBtn.addEventListener("click", (e) => {
-    e.preventDefault(); // kdyby to bylo ve formuláři
-    const text = input.value.trim();
-    console.log("🟦 Klik na Odeslat. Text:", text);
-    if (!text) return;
+        <input id="userInput" placeholder="Napiš Jodie zprávu…" />
+        <button id="sendBtn">Odeslat</button>
+      </div>
+    </div>
 
-    jodieWake();
-    input.value = "";
-    input.focus();
-  });
-});
-</script>
+    <div class="grid">
+      <div>
+        <div class="hint">Ty:</div>
+        <div id="userText" class="box">—</div>
+      </div>
+      <div>
+        <div class="hint">Jodie (mlčí, jen reaguje pohybem):</div>
+        <div id="jodieText" class="box">Jsem tady, Dani.</div>
+      </div>
+      <div id="status" class="hint"></div>
+    </div>
 
-  function jodieWake() {
-  const frame = document.getElementById("jodieFrame");
-  const video = document.getElementById("jodieVideo");
+  </div>
 
-  // glow/pulse na rámu
-  frame.classList.remove("wake");
-  void frame.offsetWidth; // restart animace
-  frame.classList.add("wake");
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const frame = document.getElementById("jodieFrame");
+      const video = document.getElementById("jodieVideo");
 
-  // jemné „kývnutí“ videa
-  video.classList.remove("nod");
-  void video.offsetWidth;
-  video.classList.add("nod");
+      const talkBtn = document.getElementById("talkBtn");
+      const stopBtn = document.getElementById("stopBtn");
 
-  // po chvíli uklidit třídy (ať jde spustit znovu)
-  setTimeout(() => frame.classList.remove("wake"), 1300);
-  setTimeout(() => video.classList.remove("nod"), 600);
-}
- 
-  const input = document.getElementById("textInput");
-  const sendBtn = document.getElementById("sendText");
+      const userInput = document.getElementById("userInput");
+      const sendBtn = document.getElementById("sendBtn");
 
-  sendBtn.addEventListener("click", () => {
-    const text = input.value.trim();
-    if (!text) return;
+      const userText = document.getElementById("userText");
+      const jodieText = document.getElementById("jodieText");
+      const status = document.getElementById("status");
 
-    // zatím jen simulace reakce Jodie
-    console.log("Uživatel napsal:", text);jodieWake();
+      function jodieWake() {
+        frame.classList.remove("wake");
+        video.classList.remove("nod");
+        void frame.offsetWidth;
+        void video.offsetWidth;
+        frame.classList.add("wake");
+        video.classList.add("nod");
+        setTimeout(() => frame.classList.remove("wake"), 1300);
+        setTimeout(() => video.classList.remove("nod"), 600);
+      }
 
+      // ====== Psaní ======
+      function sendTyped() {
+        const text = (userInput.value || "").trim();
+        if (!text) return;
+        userText.textContent = text;
+        userInput.value = "";
+        jodieText.textContent = "…";
+        status.textContent = "Jodie reaguje pohybem.";
+        jodieWake();
+        setTimeout(() => {
+          jodieText.textContent = "Rozumím, Dani. (Zatím nemluvím, jen jsem tady.)";
+          status.textContent = "";
+        }, 500);
+      }
 
-    // tady později napojíš AI odpověď / hlas
-    // např. changeJodieState("listening");
+      sendBtn.addEventListener("click", (e) => { e.preventDefault(); sendTyped(); });
+      userInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendTyped(); });
 
-    input.value = "";
-  });
-</script>
-<div id="controls" style="margin-top: 16px; text-align: center;">
-  <input
-    id="textInput"
-    type="text"
-    placeholder="Napiš Jodie zprávu…"
-    style="
-      width: 70%;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    "
-  />
-  <button
-    id="sendText"
-    style="
-      padding: 10px 16px;
-      font-size: 16px;
-      margin-left: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    "
-  >
-    Odeslat
-  </button>
-</div>
+      // ====== Mluvení (přepis) ======
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let rec = null;
+
+      if (!SpeechRecognition) {
+        status.textContent = "Rozpoznávání řeči není podporováno. Zkus Chrome.";
+        talkBtn.disabled = true;
+      } else {
+        rec = new SpeechRecognition();
+        rec.lang = "cs-CZ";
+        rec.interimResults = true;
+        rec.continuous = true;
+
+        let finalText = "";
+
+        talkBtn.addEventListener("click", async () => {
+          try {
+            status.textContent = "Žádám o mikrofon…";
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            finalText = "";
+            userText.textContent = "Poslouchám…";
+            jodieText.textContent = "…";
+            rec.start();
+            talkBtn.disabled = true;
+            stopBtn.disabled = false;
+            status.textContent = "Mluv, Dani.";
+          } catch {
+            status.textContent = "Mikrofon nepovolen / nejde spustit.";
+          }
+        });
+
+        stopBtn.addEventListener("click", () => {
+          try { rec.stop(); } catch {}
+        });
+
+        rec.onresult = (event) => {
+          let interim = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const txt = event.results[i][0].transcript;
+            if (event.results[i].isFinal) finalText += txt + " ";
+            else interim += txt;
+          }
+          userText.textContent = (finalText + interim).trim() || "…";
+        };
+
+        rec.onerror = (e) => {
+          status.textContent = "Chyba mikrofonu: " + e.error;
+          talkBtn.disabled = false;
+          stopBtn.disabled = true;
+        };
+
+        rec.onend = () => {
+          talkBtn.disabled = false;
+          stopBtn.disabled = true;
+          status.textContent = "Hotovo.";
+          jodieWake();
+          setTimeout(() => {
+            jodieText.textContent = "Slyším tě, Dani. (Zatím nemluvím, jen reagují pohybem.)";
+            status.textContent = "";
+          }, 500);
+        };
+      }
+    });
+  </script>
+</body>
+</html>
+
