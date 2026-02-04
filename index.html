@@ -158,9 +158,7 @@ const WORKER_TALK_URL = "https://TVUJ-WORKER.workers.dev/talk";
         jodieText.textContent = "…";
         status.textContent = "Jodie reaguje pohybem.";
         jodieWake();
-        setTimeout(() => {
-          jodieText.textContent = "Rozumím, Dani. (Zatím nemluvím, jen jsem tady.)";
-         status.textContent = "Jodie přemýšlí…";
+        status.textContent = "Jodie přemýšlí…";
 
 fetch(WORKER_TALK_URL, {
   method: "POST",
@@ -185,6 +183,7 @@ fetch(WORKER_TALK_URL, {
   status.textContent = "Chyba: " + err.message;
   jodieText.textContent = "Něco se pokazilo…";
 });
+
 
 
       sendBtn.addEventListener("click", (e) => { e.preventDefault(); sendTyped(); });
