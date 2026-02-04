@@ -147,6 +147,11 @@
         userInput.value = "";
         jodieText.textContent = "…";
         status.textContent = "Jodie reaguje pohybem.";
+        const jodieAudio = document.getElementById("jodieAudio");
+
+// sem vložíš URL Workeru (doplníme jakmile mi ho pošleš)
+const WORKER_TALK_URL = "https://jodie.novym6938.workers.dev//talk";
+
         jodieWake();
         setTimeout(() => {
           jodieText.textContent = "Rozumím, Dani. (Zatím nemluvím, jen jsem tady.)";
