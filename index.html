@@ -6,9 +6,9 @@
   <title>Jodie</title>
   <style>
     :root { color-scheme: dark; }
-     body{
+    body{
       margin:0; background:#000; color:#fff;
-       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       min-height:100vh; display:flex; align-items:center; justify-content:center;
     }
     .wrap{ width:min(920px, 96vw); display:flex; flex-direction:column; gap:14px; padding:14px; }
@@ -74,7 +74,7 @@
     @keyframes nod {
       0% { transform: translateY(0px); }
       35%{ transform: translateY(2px); }
-      70%{ transform: translateY(-1px); }ě
+      70%{ transform: translateY(-1px); }
       100%{ transform: translateY(0px); }
     }
 
@@ -110,12 +110,7 @@
       </div>
       <div id="status" class="hint"></div>
     </div>
-    <div>
-    <div id="jodieText" class="box">Jsem tady, Dani.</div>
 
-<audio id="jodieAudio" controls style="width:100%; max-width:920px; margin-top:8px;"></audio>
-
- 
   </div>
 
   <script>
@@ -132,12 +127,7 @@
       const userText = document.getElementById("userText");
       const jodieText = document.getElementById("jodieText");
       const status = document.getElementById("status");
-      const jodieAudio = document.getElementById("jodieAudio");
 
-// sem vložíš URL Workeru (doplníme jakmile mi ho pošleš)
-const WORKER_TALK_URL = jodie.novym6938.workers.dev/
-
-      
       function jodieWake() {
         frame.classList.remove("wake");
         video.classList.remove("nod");
@@ -150,56 +140,19 @@ const WORKER_TALK_URL = jodie.novym6938.workers.dev/
       }
 
       // ====== Psaní ======
-     async function sendTyped() {
-  try {
-    const text = (userInput.value || "").trim();
-    if (!text) return;
-
-    userText.textContent = text;
-    userInput.value = "";
-    jodieText.textContent = "…";
-    status.textContent = "Jodie přemýšlí…";
-    jodieWake();
-
-    // KONTROLA Worker URL
-    if (!WORKER_TALK_URL || WORKER_TALK_URL.includes("TVUJ-WORKER")) {
-      status.textContent = "Chybí Worker URL (WORKER_TALK_URL).";
-      jodieText.textContent = "Nejsem připojená na server.";
-      return;
-    }
-
-    const res = await fetch(WORKER_TALK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      status.textContent = "Server chyba: " + (data.error || res.status);
-      jodieText.textContent = "Něco se pokazilo na serveru.";
-      return;
-    }
-
-    jodieText.textContent = data.jodieText || "…";
-    status.textContent = "";
-
-    if (data.audioMp3Base64) {
-      jodieAudio.src = "data:audio/mp3;base64," + data.audioMp3Base64;
-      await jodieAudio.play();
-    } else {
-      status.textContent = "Nepřišel zvuk (audioMp3Base64).";
-    }
-
-  } catch (err) {
-    status.textContent = "Chyba: " + err.message;
-    jodieText.textContent = "Spadlo to v prohlížeči.";
-  }
-}
-
-
-
+      function sendTyped() {
+        const text = (userInput.value || "").trim();
+        if (!text) return;
+        userText.textContent = text;
+        userInput.value = "";
+        jodieText.textContent = "…";
+        status.textContent = "Jodie reaguje pohybem.";
+        jodieWake();
+        setTimeout(() => {
+          jodieText.textContent = "Rozumím, Dani. (Zatím nemluvím, jen jsem tady.)";
+          status.textContent = "";
+        }, 500);
+      }
 
       sendBtn.addEventListener("click", (e) => { e.preventDefault(); sendTyped(); });
       userInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendTyped(); });
