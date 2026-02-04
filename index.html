@@ -74,7 +74,7 @@
     @keyframes nod {
       0% { transform: translateY(0px); }
       35%{ transform: translateY(2px); }
-      70%{ transform: translateY(-1px); }
+      70%{ transform: translateY(-1px); }ě
       100%{ transform: translateY(0px); }
     }
 
@@ -132,7 +132,12 @@
       const userText = document.getElementById("userText");
       const jodieText = document.getElementById("jodieText");
       const status = document.getElementById("status");
+      const jodieAudio = document.getElementById("jodieAudio");
 
+// sem vložíš URL Workeru (doplníme jakmile mi ho pošleš)
+const WORKER_TALK_URL = "https://TVUJ-WORKER.workers.dev/talk";
+
+      
       function jodieWake() {
         frame.classList.remove("wake");
         video.classList.remove("nod");
@@ -155,9 +160,32 @@
         jodieWake();
         setTimeout(() => {
           jodieText.textContent = "Rozumím, Dani. (Zatím nemluvím, jen jsem tady.)";
-          status.textContent = "";
-        }, 500);
-      }
+         status.textContent = "Jodie přemýšlí…";
+
+fetch(WORKER_TALK_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text })
+})
+.then(async (r) => {
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || "Server error");
+
+  jodieText.textContent = data.jodieText || "…";
+  status.textContent = "";
+  jodieWake();
+
+  // mp3 base64 -> audio
+  if (data.audioMp3Base64) {
+    jodieAudio.src = "data:audio/mp3;base64," + data.audioMp3Base64;
+    jodieAudio.play();
+  }
+})
+.catch((err) => {
+  status.textContent = "Chyba: " + err.message;
+  jodieText.textContent = "Něco se pokazilo…";
+});
+
 
       sendBtn.addEventListener("click", (e) => { e.preventDefault(); sendTyped(); });
       userInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendTyped(); });
