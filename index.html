@@ -150,39 +150,54 @@ const WORKER_TALK_URL = jodie.novym6938.workers.dev/
       }
 
       // ====== Psaní ======
-      function sendTyped() {
-        const text = (userInput.value || "").trim();
-        if (!text) return;
-        userText.textContent = text;
-        userInput.value = "";
-        jodieText.textContent = "…";
-        status.textContent = "Jodie reaguje pohybem.";
-        jodieWake();
-        status.textContent = "Jodie přemýšlí…";
+     async function sendTyped() {
+  try {
+    const text = (userInput.value || "").trim();
+    if (!text) return;
 
-fetch(WORKER_TALK_URL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ text })
-})
-.then(async (r) => {
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.error || "Server error");
+    userText.textContent = text;
+    userInput.value = "";
+    jodieText.textContent = "…";
+    status.textContent = "Jodie přemýšlí…";
+    jodieWake();
 
-  jodieText.textContent = data.jodieText || "…";
-  status.textContent = "";
-  jodieWake();
+    // KONTROLA Worker URL
+    if (!WORKER_TALK_URL || WORKER_TALK_URL.includes("TVUJ-WORKER")) {
+      status.textContent = "Chybí Worker URL (WORKER_TALK_URL).";
+      jodieText.textContent = "Nejsem připojená na server.";
+      return;
+    }
 
-  // mp3 base64 -> audio
-  if (data.audioMp3Base64) {
-    jodieAudio.src = "data:audio/mp3;base64," + data.audioMp3Base64;
-    jodieAudio.play();
+    const res = await fetch(WORKER_TALK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      status.textContent = "Server chyba: " + (data.error || res.status);
+      jodieText.textContent = "Něco se pokazilo na serveru.";
+      return;
+    }
+
+    jodieText.textContent = data.jodieText || "…";
+    status.textContent = "";
+
+    if (data.audioMp3Base64) {
+      jodieAudio.src = "data:audio/mp3;base64," + data.audioMp3Base64;
+      await jodieAudio.play();
+    } else {
+      status.textContent = "Nepřišel zvuk (audioMp3Base64).";
+    }
+
+  } catch (err) {
+    status.textContent = "Chyba: " + err.message;
+    jodieText.textContent = "Spadlo to v prohlížeči.";
   }
-})
-.catch((err) => {
-  status.textContent = "Chyba: " + err.message;
-  jodieText.textContent = "Něco se pokazilo…";
-});
+}
+
 
 
 
